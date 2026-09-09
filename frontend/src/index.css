@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Custom Properties (Design Tokens) ──────────────────────────────── */
+:root {
+  --color-primary:    #6366f1;
+  --color-secondary:  #14b8a6;
+  --color-accent:     #f59e0b;
+  --color-danger:     #f43f5e;
+  --color-bg:         #f8fafc;
+  --color-surface:    #ffffff;
+  --color-text:       #0f172a;
+  --color-muted:      #64748b;
+  --radius-card:      12px;
+  --shadow-card:      0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ── Base Styles ─────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar Styling ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ── Component Utilities ──────────────────────────────────────────────────── */
+@layer components {
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white
+           font-semibold px-5 py-2.5 rounded-xl transition-all duration-200
+           shadow-sm hover:shadow-md focus:outline-none focus:ring-2
+           focus:ring-primary-400 focus:ring-offset-2 disabled:opacity-50
+           disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-primary-50 text-primary-600 font-semibold
+           px-5 py-2.5 rounded-xl border border-primary-200 transition-all
+           duration-200 shadow-sm focus:outline-none focus:ring-2
+           focus:ring-primary-400 focus:ring-offset-2;
+  }
+
+  .btn-ghost {
+    @apply text-slate-600 hover:text-primary-600 hover:bg-primary-50
+           font-medium px-4 py-2 rounded-xl transition-all duration-200;
+  }
+
+  .btn-danger {
+    @apply bg-danger-500 hover:bg-danger-600 text-white font-semibold
+           px-5 py-2.5 rounded-xl transition-all duration-200 shadow-sm;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-card border border-slate-100 p-6;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 cursor-pointer;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white
+           text-slate-900 placeholder-slate-400 focus:outline-none
+           focus:ring-2 focus:ring-primary-400 focus:border-transparent
+           transition-all duration-200 text-sm;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-slate-700 mb-1.5;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-primary  { @apply badge bg-primary-100 text-primary-700; }
+  .badge-success  { @apply badge bg-secondary-100 text-secondary-700; }
+  .badge-warning  { @apply badge bg-accent-100 text-accent-700; }
+  .badge-danger   { @apply badge bg-danger-100 text-danger-700; }
+
+  .section-title {
+    @apply text-2xl font-bold text-slate-900;
+  }
+
+  .section-subtitle {
+    @apply text-slate-500 text-sm mt-1;
+  }
+
+  /* Skeleton / shimmer for loading states */
+  .skeleton {
+    @apply bg-slate-200 rounded animate-pulse;
+  }
+
+  /* Chat bubbles */
+  .chat-bubble-user {
+    @apply bg-primary-500 text-white rounded-2xl rounded-tr-sm px-4 py-3 text-sm max-w-xs ml-auto;
+  }
+
+  .chat-bubble-ai {
+    @apply bg-white text-slate-800 rounded-2xl rounded-tl-sm px-4 py-3 text-sm max-w-xs shadow-card border border-slate-100;
+  }
+}
+
+/* ── Prose-like markdown styling for AI content ──────────────────────────── */
+.ai-content h1  { @apply text-xl font-bold text-slate-900 mb-2 mt-4; }
+.ai-content h2  { @apply text-lg font-semibold text-slate-800 mb-2 mt-4 pb-1 border-b border-slate-100; }
+.ai-content h3  { @apply text-base font-semibold text-slate-700 mb-1 mt-3; }
+.ai-content p   { @apply text-slate-700 leading-relaxed mb-3 text-sm; }
+.ai-content ul  { @apply list-disc list-inside space-y-1 mb-3 text-slate-700 text-sm; }
+.ai-content ol  { @apply list-decimal list-inside space-y-1 mb-3 text-slate-700 text-sm; }
+.ai-content li  { @apply leading-relaxed; }
+.ai-content strong { @apply font-semibold text-slate-900; }
+.ai-content code { @apply bg-slate-100 text-primary-700 px-1.5 py-0.5 rounded text-xs font-mono; }
+.ai-content pre  { @apply bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto text-xs mb-3; }
+.ai-content blockquote {
+  @apply border-l-4 border-primary-300 pl-4 py-2 bg-primary-50 rounded-r-xl mb-3 text-slate-700 text-sm italic;
+}
+
+/* ── Mermaid diagram overrides ───────────────────────────────────────────── */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+/* ── Page transition ─────────────────────────────────────────────────────── */
+.page-enter {
+  animation: fadeIn 0.25s ease-out;
+}
