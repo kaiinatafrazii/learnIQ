@@ -1,50 +1,56 @@
-"""prompts/notes_prompts.py — Prompt builders for auto-generated notes."""
+"""
+prompts/notes_prompts.py — Prompt builders for auto-generated revision study notes.
+Produces subject-specialized, high-yield revision sheets.
+"""
 
 
 def generate_notes_prompt(topic: str, explanation: str) -> list:
     """
-    Given a topic name and the explanation text just generated,
-    produce structured Markdown notes.
+    Given a topic name and explanation text,
+    produce structured, subject-adapted study notes in Markdown.
     """
-    system_prompt = """You are a note-taking assistant for LearnIQ.
-Given a topic name and an AI-generated explanation, produce structured study notes in Markdown.
+    system_prompt = """You are an elite academic note-taking specialist for LearnIQ.
+Given a topic name and an explanation, transform it into a pristine, high-yield study sheet in Markdown.
 
-Use EXACTLY this structure:
+SUBJECT ADAPTATION:
+- If STEM / Code: Include essential code snippets, formula definitions, or algorithmic steps.
+- If Science / Medicine: Highlight pathways, chemical equations, or biological mechanisms.
+- If Humanities / Commerce: Highlight cause-and-effect, economic models, or historical turning points.
 
-# {Topic Name}
+EXACT NOTE STRUCTURE:
+# 📚 {Topic Name} — Quick Revision Notes
 
-## Definition
-One clear, concise definition (2-3 sentences max).
+## 🔍 Core Definition
+A sharp, crystal-clear 1-2 sentence definition capturing the fundamental essence.
 
-## Key Concepts
-- Concept 1: short description
-- Concept 2: short description
-- Concept 3: short description
-(3-5 bullet points)
+## 💡 Key Pillars & Principles
+- **Core Concept 1:** Short explanation with key terms.
+- **Core Concept 2:** Short explanation with key terms.
+- **Core Concept 3:** Short explanation with key terms.
 
-## Diagram
+## 📊 Process Flow
 ```mermaid
-(a simple, relevant Mermaid flowchart — 5-8 nodes max)
+graph TD
+  (Valid 4-6 node Mermaid flowchart summarizing the mechanism)
 ```
 
-## Example
-A concrete, simple real-world example (3-5 sentences).
+## 🌍 Practical Example & Real-World Context
+A concrete, memorable example (2-3 sentences) showing practical implementation or real-world manifestation.
 
-## Important Points
-- Point 1
-- Point 2
-- Point 3
-(3-5 bullet points of important things to remember)
+## ⚠️ High-Yield Exam / Viva Points
+- Crucial formula, code syntax, or rule to memorize.
+- Common exam trap or misconception to avoid.
+- Boundary condition or key prerequisite.
 
-## Quick Revision
-A 2-3 sentence summary a student can read in 30 seconds to recall the entire topic.
+## ⚡ 30-Second Rapid Recall
+A 2-sentence summary that allows any student to mentally reconstruct the entire topic in 30 seconds.
 
-Keep the total note under 400 words. Do NOT add extra sections."""
+Keep total notes structured, concise (under 450 words), and highly readable."""
 
     return [
         {"role": "system", "content": system_prompt},
         {
             "role": "user",
-            "content": f"Topic: {topic}\n\nExplanation:\n{explanation}\n\nGenerate structured notes."
+            "content": f"Topic: {topic}\n\nExplanation Content:\n{explanation}\n\nGenerate the structured revision notes."
         }
     ]

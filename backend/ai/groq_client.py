@@ -1,6 +1,6 @@
 """
-ai/groq_client.py — Thin wrapper around Groq SDK with built-in educational fallback.
-Ensures the app is 100% demo-ready and functional with ultra-fast Groq LPU inference.
+ai/groq_client.py — High-performance Groq client with 20+ model cascade fallbacks
+and subject-specialized pedagogical reasoning.
 """
 
 import os
@@ -12,6 +12,32 @@ from dotenv import load_dotenv
 load_dotenv()
 
 _client = None
+
+# Top 20+ Groq models ranked for speed, reasoning quality, and availability
+DEFAULT_GROQ_MODELS = [
+    "openai/gpt-oss-120b",           # 120B parameter high-precision reasoning model
+    "groq/compound",                 # Groq compound architecture
+    "qwen/qwen3.8-27b",              # Qwen 3.8 27B on Groq LPU
+    "openai/gpt-oss-20b",            # High speed 20B model
+    "groq/compound-mini",            # Lightweight compound model
+    "qwen/qwen3.6-27b",              # Qwen 3.6 27B
+    "llama-3.3-70b-versatile",       # Meta Llama 3.3 70B flagship
+    "llama-3.1-70b-versatile",       # Meta Llama 3.1 70B
+    "llama-3.1-8b-instant",          # Meta Llama 3.1 8B instant
+    "deepseek-r1-distill-llama-70b", # DeepSeek R1 70B reasoning
+    "deepseek-r1-distill-qwen-32b",  # DeepSeek R1 32B
+    "qwen-2.5-32b",                  # Qwen 2.5 32B
+    "qwen-2.5-coder-32b",            # Qwen 2.5 Coder
+    "llama-3.2-3b-preview",          # Llama 3.2 3B
+    "llama-3.2-1b-preview",          # Llama 3.2 1B
+    "llama-3.2-11b-vision-preview",  # Llama 3.2 11B
+    "llama-3.2-90b-vision-preview",  # Llama 3.2 90B
+    "llama3-70b-8192",               # Llama 3 70B legacy
+    "llama3-8b-8192",                # Llama 3 8B legacy
+    "mixtral-8x7b-32768",            # Mixtral 8x7B MoE
+    "gemma2-9b-it",                  # Google Gemma 2 9B
+    "allam-2-7b",                    # Allam 2 7B
+]
 
 
 def is_api_key_valid() -> bool:
@@ -35,9 +61,45 @@ def get_client() -> Groq:
     return _client
 
 
+def clean_model_output(text: str) -> str:
+    """Strip internal reasoning tags (like DeepSeek / Qwen <think> blocks) if present."""
+    if not text:
+        return ""
+    # Strip <think>...</think>
+    cleaned = re.sub(r"<think>[\s\S]*?</think>", "", text, flags=re.IGNORECASE).strip()
+    return cleaned if cleaned else text.strip()
+
+
+def detect_subject_category(text: str) -> str:
+    """Classify the subject domain to adapt tone, format, and examples."""
+    t = text.lower()
+    if any(k in t for k in ["code", "python", "javascript", "algorithm", "data structure", "pointer",
+                           "tree", "graph", "sql", "database", "api", "array", "react", "html", "css",
+                           "backend", "frontend", "git", "linux", "compiler", "networking", "oop", "docker"]):
+        return "computer_science"
+    if any(k in t for k in ["cell", "dna", "photosynthesis", "organism", "mitosis", "meiosis", "heart",
+                           "blood", "neuron", "evolution", "ecosystem", "protein", "enzyme", "bacteria", "biology"]):
+        return "biology"
+    if any(k in t for k in ["reaction", "molecule", "atom", "acid", "base", "periodic", "bond",
+                           "electron", "oxidation", "equilibrium", "organic chemistry", "thermodynamics", "chemistry"]):
+        return "chemistry"
+    if any(k in t for k in ["velocity", "gravity", "force", "newton", "quantum", "relativity",
+                           "kinetic", "friction", "current", "voltage", "wave", "optics", "magnetism", "physics"]):
+        return "physics"
+    if any(k in t for k in ["derivative", "integral", "matrix", "vector", "probability", "statistics",
+                           "geometry", "algebra", "trigonometry", "theorem", "equation", "calculus", "fraction"]):
+        return "mathematics"
+    if any(k in t for k in ["war", "empire", "revolution", "treaty", "constitution", "dynasty",
+                           "century", "independence", "monarchy", "civilization", "president", "history"]):
+        return "history"
+    if any(k in t for k in ["inflation", "gdp", "market", "demand", "supply", "currency",
+                           "fiscal", "monetary", "shares", "investment", "economics", "finance"]):
+        return "economics"
+    return "general"
+
+
 def _generate_fallback_response(messages: list) -> str:
-    """Generate smart, context-aware responses when offline or demoing without API key."""
-    # Combine prompt text to determine intent
+    """Generate smart, subject-specialized context-aware responses when offline."""
     all_text = " ".join([m.get("content", "") for m in messages])
     all_lower = all_text.lower()
 
@@ -45,61 +107,89 @@ def _generate_fallback_response(messages: list) -> str:
     if "mermaid" in all_lower or "flowchart" in all_lower:
         topic_match = re.search(r'topic:\s*([^\n\r]+)', all_text, re.IGNORECASE)
         topic = topic_match.group(1).strip() if topic_match else "Core System"
-        return f"""graph TD
-    A["🚀 Start: {topic}"] --> B["📖 Step 1: Initialize & Input"]
-    B --> C{{"🔍 Processing & Logic"}}
-    C -->|Condition Met| D["⚡ Optimized Pathway"]
-    C -->|Fallback| E["🔄 Corrective Routine"]
-    D --> F["🎯 Output & Mastered Concept"]
+        category = detect_subject_category(topic)
+
+        if category == "computer_science":
+            return f"""graph TD
+    A["🚀 Start: {topic}"] --> B["📥 Input & Initialization"]
+    B --> C{{"⚙️ Validation & Logic Check"}}
+    C -->|Valid| D["⚡ Algorithmic Processing"]
+    C -->|Invalid| E["⚠️ Error Handling / Exception"]
+    D --> F["🎯 Optimized Return Result"]
     E --> F
     style A fill:#e0e7ff,stroke:#6366f1,stroke-width:2px
     style C fill:#fef3c7,stroke:#f59e0b,stroke-width:2px
     style F fill:#ccfbf1,stroke:#14b8a6,stroke-width:2px"""
+        elif category in ["biology", "chemistry"]:
+            return f"""graph TD
+    A["🌱 Initial Reactants / State: {topic}"] --> B["⚡ Activation / Enzyme Binding"]
+    B --> C["🔬 Intermediate Transition Stage"]
+    C --> D["✨ Primary Product Synthesis"]
+    D --> E["♻️ Cycle Regeneration / Byproducts"]
+    style A fill:#dcfce7,stroke:#16a34a,stroke-width:2px
+    style C fill:#fef3c7,stroke:#f59e0b,stroke-width:2px
+    style D fill:#e0e7ff,stroke:#6366f1,stroke-width:2px"""
+        elif category in ["physics", "mathematics"]:
+            return f"""graph TD
+    A["📐 Fundamental Principle: {topic}"] --> B["🔢 Formulate Equations & Variables"]
+    B --> C["⚖️ Apply Conservation & Boundary Conditions"]
+    C --> D["🎯 Exact Solution / Proof"]
+    style A fill:#e0e7ff,stroke:#6366f1,stroke-width:2px
+    style C fill:#fef3c7,stroke:#f59e0b,stroke-width:2px
+    style D fill:#dcfce7,stroke:#16a34a,stroke-width:2px"""
+        else:
+            return f"""graph TD
+    A["🏛️ Origin / Background: {topic}"] --> B["⚔️ Catalyst & Key Events"]
+    B --> C["🔄 Pivotal Turning Point"]
+    C --> D["🌐 Long-term Impact & Modern Outcome"]
+    style A fill:#f1f5f9,stroke:#64748b,stroke-width:2px
+    style B fill:#fee2e2,stroke:#ef4444,stroke-width:2px
+    style D fill:#dcfce7,stroke:#16a34a,stroke-width:2px"""
 
-    # 2. MCQ Quiz Generation (must return JSON list)
+    # 2. MCQ Quiz Generation
     if "json" in all_lower and ("mcq" in all_lower or "quiz" in all_lower or "question" in all_lower):
         topic_match = re.search(r'topic:\s*([^\n\r]+)', all_text, re.IGNORECASE)
-        topic = topic_match.group(1).strip() if topic_match else "General Computing"
+        topic = topic_match.group(1).strip() if topic_match else "General Topic"
         questions = [
             {
-                "question": f"What is the primary fundamental objective of {topic}?",
-                "option_a": f"To optimize performance and structure data in {topic}",
-                "option_b": "To eliminate the need for computer hardware",
-                "option_c": "To convert high-level code into physical memory",
-                "option_d": "To serve as a standalone database engine",
+                "question": f"What is the central concept behind {topic}?",
+                "option_a": f"The systematic mechanism governing how {topic} operates in its domain",
+                "option_b": "A random phenomenon with no predictable properties",
+                "option_c": "An obsolete method that has been completely discarded",
+                "option_d": "A naming convention only with no functional significance",
                 "correct_answer": "A",
-                "explanation": f"{topic} focuses on structured efficiency, systematic logic, and computational optimization.",
-                "concept_tag": "Fundamentals"
+                "explanation": f"{topic} relies on structured principles and demonstrable cause-and-effect rules.",
+                "concept_tag": "core_fundamentals"
             },
             {
-                "question": f"Which of the following is a standard characteristic or best practice when working with {topic}?",
-                "option_a": "Random iteration without deterministic outcomes",
-                "option_b": "Modular design and separation of responsibilities",
-                "option_c": "Ignoring time and space constraints",
-                "option_d": "Hardcoding variable parameters",
+                "question": f"Which factor is crucial when analyzing {topic}?",
+                "option_a": "Disregarding external environmental constraints",
+                "option_b": "Understanding underlying rules, boundary conditions, and dependencies",
+                "option_c": "Relying purely on intuition without measurement",
+                "option_d": "Avoiding documentation and verification",
                 "correct_answer": "B",
-                "explanation": "Modular architecture ensures scalability, testability, and maintainability across systems.",
-                "concept_tag": "Architecture & Design"
+                "explanation": "Clear understanding of parameters and constraints is essential for accurate problem solving.",
+                "concept_tag": "mechanisms_and_rules"
             },
             {
-                "question": f"In terms of efficiency, how is complexity typically evaluated in {topic}?",
-                "option_a": "Through Big-O time and space asymptotic analysis",
-                "option_b": "By counting total physical keystrokes",
-                "option_c": "Based on monitor refresh rate",
-                "option_d": "Through manual clock timers only",
-                "correct_answer": "A",
-                "explanation": "Asymptotic analysis (Big-O notation) provides standard bounds for worst and average case efficiency.",
-                "concept_tag": "Complexity Analysis"
+                "question": f"What is a common pitfall or misconception regarding {topic}?",
+                "option_a": "Testing under varied conditions",
+                "option_b": "Confusing superficial symptoms with root underlying causes",
+                "option_c": "Checking formulas against real-world observations",
+                "option_d": "Breaking complex problems into smaller subcomponents",
+                "correct_answer": "B",
+                "explanation": "A frequent mistake is failing to identify the root mechanism driving the outcome.",
+                "concept_tag": "analysis_and_misconceptions"
             },
             {
-                "question": f"What is a common pitfall or challenge encountered when mastering {topic}?",
-                "option_a": "Underestimating boundary conditions and edge cases",
-                "option_b": "Using clean formatting",
-                "option_c": "Writing clear documentation",
-                "option_d": "Testing code with multiple inputs",
+                "question": f"How is success or correctness evaluated in the context of {topic}?",
+                "option_a": "Through deterministic, verifiable results and standard metrics",
+                "option_b": "By whichever option is easiest to write down",
+                "option_c": "Without reference to empirical evidence or logic",
+                "option_d": "By arbitrary voting only",
                 "correct_answer": "A",
-                "explanation": "Edge cases and boundary limits are the most frequent source of runtime errors and inefficiencies.",
-                "concept_tag": "Error Handling & Edge Cases"
+                "explanation": "Verifiable outcomes and standardized evaluation metrics guarantee rigor.",
+                "concept_tag": "evaluation_and_application"
             }
         ]
         return json.dumps(questions, indent=2)
@@ -108,23 +198,24 @@ def _generate_fallback_response(messages: list) -> str:
     if "notes" in all_lower or ("bullet" in all_lower and "summary" in all_lower):
         topic_match = re.search(r'topic:\s*([^\n\r]+)', all_text, re.IGNORECASE)
         topic = topic_match.group(1).strip() if topic_match else "Study Topic"
-        return f"""# 📚 Quick Revision Notes: {topic}
+        category = detect_subject_category(topic)
+        return f"""# 📚 Master Notes: {topic}
 
-## 🔍 Overview
-- **{topic}** is a core computational concept designed to solve structured problems efficiently.
-- Emphasizes deterministic behavior, optimal space/time utilization, and clean abstraction.
+## 🔍 Core Definition
+**{topic}** represents a fundamental concept in {category.replace('_', ' ').title()}. It provides the systematic principles required to understand and apply this phenomenon effectively.
 
-## 💡 Key Principles
-1. **Abstraction**: Hides low-level complexity while exposing clean interfaces.
-2. **Efficiency**: Minimizes unnecessary redundant operations.
-3. **Robustness**: Handles edge cases and unexpected inputs safely.
+## 💡 Key Pillars & Principles
+1. **Foundation**: The starting premises and definitions governing {topic}.
+2. **Mechanism**: The step-by-step process and interactions that generate results.
+3. **Application**: How this concept directly solves problems or manifests in practice.
 
-## 🧠 Memory Hook & Analogy
-> Think of **{topic}** like an organized modern library system: indexed catalogs allow instant retrieval without scanning every shelf.
+## 🧠 Memory Hook / Analogy
+> Think of **{topic}** like a well-calibrated engine: every component has an exact role, and altering one variable predictably shifts the overall output.
 
-## 🎯 Exam & Interview Focus
-- Understand the core trade-offs between memory overhead and execution speed.
-- Be prepared to trace state transitions step-by-step."""
+## 🎯 Exam & Viva Rapid Points
+- Always identify the primary inputs, governing laws, and final outputs.
+- Watch out for edge cases and boundary conditions.
+- Remember the standard formulas/rules associated with this domain."""
 
     # 4. Tutor Explanation
     topic_match = re.search(r'topic:\s*([^\n\r]+)', all_text, re.IGNORECASE)
@@ -132,51 +223,85 @@ def _generate_fallback_response(messages: list) -> str:
 
     level_match = re.search(r'level:\s*([^\n\r]+)', all_text, re.IGNORECASE)
     level = level_match.group(1).strip() if level_match else "Intermediate"
+    category = detect_subject_category(topic)
 
-    return f"""# 🎓 Understanding {topic} ({level} Level)
+    return f"""# 🎓 Master Class: {topic} ({level.title()} Level)
 
-Welcome to your structured lesson on **{topic}**. Let's break this down into clear, intuitive concepts.
+Welcome to your specialized lesson on **{topic}**. We will examine this concept through first principles, intuitive analogies, and subject-tailored breakdowns.
 
 ## 1. What is {topic}?
-At its core, **{topic}** provides a systematic methodology for organizing logic, processing data, and achieving optimal results in computer systems. Rather than solving problems haphazardly, it offers proven patterns and rules.
+In **{category.replace('_', ' ').title()}**, **{topic}** is a cornerstone concept that explains how specific inputs, principles, and rules combine to produce consistent, predictable results. Understanding it allows you to solve advanced problems with confidence.
 
 ## 2. Intuitive Real-World Analogy
-> Imagine you are organizing an international postal sorting center. Instead of manually inspecting millions of parcels one by one, you use specialized conveyor belts and routing tags. That structured efficiency is exactly how **{topic}** streamlines computational tasks.
+> 💡 **Real-World Picture:** Think of **{topic}** like a precision orchestrator. Just as an orchestra requires coordinated timing, distinct instrumental voices, and disciplined tempo to create harmony, **{topic}** coordinates underlying principles to achieve its final state.
 
 ## 3. Step-by-Step Breakdown
-1. **Initialization & Setup**: The environment prepares the necessary state and variables.
-2. **Core Execution & Logic**: Operations execute systematically following algorithmic constraints.
-3. **Verification & Output**: Results are verified against expected thresholds and safely returned.
+1. **Core Setup & Inputs**: The starting state and foundational conditions needed.
+2. **Dynamic Mechanism**: The critical transformation or calculation step that drives the system.
+3. **Outcome & Resolution**: The stable end state and verification of results.
 
-## 4. Practical Implementation Tip
-Always test your implementations with boundary conditions (such as empty collections or maximum capacity values) to guarantee stability.
-
-**Key Takeaways:**
-• {topic} provides clean structure and deterministic behavior.
-• Modular implementation reduces bugs and improves scalability.
-• Understanding the core trade-offs helps select the best design choice.
-• Edge-case verification ensures production readiness."""
+## 4. Key Takeaways & Exam Strategy
+- **Pillar 1:** Understand the fundamental definition and purpose of {topic}.
+- **Pillar 2:** Focus on the causal mechanism, not just rote memorization.
+- **Pillar 3:** Test yourself on edge cases and standard problem variations."""
 
 
 def chat_completion(messages: list, model: str = None,
                     temperature: float = 0.7, max_tokens: int = 1500) -> str:
-    """Send a messages list to Groq API or use smart fallback if key is unconfigured."""
+    """
+    Send messages to Groq API with an automatic 20+ model cascade fallback.
+    If the selected model fails (404, rate limits, deprecation, downtime),
+    it automatically transitions to the next available model in the chain.
+    """
     if not is_api_key_valid():
         print("[LearnIQ] Generating response using built-in educational engine (Groq Key not set/demo mode).")
         return _generate_fallback_response(messages)
 
-    if not model:
-        model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    # Build candidate models queue prioritizing user-selected/env model first
+    preferred_env_model = os.getenv("GROQ_MODEL", "").strip()
+    candidates = []
+    if model:
+        candidates.append(model)
+    if preferred_env_model and preferred_env_model not in candidates:
+        candidates.append(preferred_env_model)
 
+    for m in DEFAULT_GROQ_MODELS:
+        if m not in candidates:
+            candidates.append(m)
+
+    client = None
     try:
         client = get_client()
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
-        return response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"[LearnIQ] Groq API call failed ({e}). Falling back to educational engine.")
+        print(f"[LearnIQ] Could not initialize Groq client: {e}. Using educational engine.")
         return _generate_fallback_response(messages)
+
+    # Cascade through candidates
+    last_error = None
+    for candidate_model in candidates:
+        try:
+            # Clean empty messages or unexpected roles if any
+            clean_messages = [{"role": m.get("role", "user"), "content": m.get("content", "")}
+                              for m in messages if m.get("content")]
+
+            response = client.chat.completions.create(
+                model=candidate_model,
+                messages=clean_messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            raw_content = response.choices[0].message.content or ""
+            cleaned = clean_model_output(raw_content)
+            if cleaned:
+                # Log successful model only if fell back
+                if candidate_model != candidates[0]:
+                    print(f"[LearnIQ] Successfully served response via fallback model: {candidate_model}")
+                return cleaned
+        except Exception as e:
+            last_error = e
+            # Ignore and cascade to next model
+            print(f"[LearnIQ] Model '{candidate_model}' unavailable ({str(e)[:70]}). Falling back to next...")
+            continue
+
+    print(f"[LearnIQ] All {len(candidates)} Groq models failed. Last error: {last_error}. Using educational engine.")
+    return _generate_fallback_response(messages)
