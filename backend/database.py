@@ -98,9 +98,16 @@ def init_db():
             option_d       TEXT    NOT NULL,
             correct_answer TEXT    NOT NULL,
             explanation    TEXT    NOT NULL,
-            concept_tag    TEXT
+            concept_tag    TEXT,
+            hint           TEXT
         )
     """)
+
+    # Migration for existing DB
+    try:
+        c.execute("ALTER TABLE questions ADD COLUMN hint TEXT")
+    except Exception:
+        pass
 
     # ── quiz_answers ───────────────────────────────────────────────────────
     c.execute("""

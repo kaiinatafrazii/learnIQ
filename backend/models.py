@@ -200,16 +200,16 @@ def get_recent_quizzes(conn, user_id, limit=5):
 # ── Questions ──────────────────────────────────────────────────────────────
 
 def create_question(conn, quiz_id, question, option_a, option_b,
-                    option_c, option_d, correct_answer, explanation, concept_tag=None):
+                    option_c, option_d, correct_answer, explanation, concept_tag=None, hint=None):
     cur = conn.execute(
         """
         INSERT INTO questions
             (quiz_id, question, option_a, option_b, option_c, option_d,
-             correct_answer, explanation, concept_tag)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+             correct_answer, explanation, concept_tag, hint)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (quiz_id, question, option_a, option_b, option_c, option_d,
-         correct_answer, explanation, concept_tag)
+         correct_answer, explanation, concept_tag, hint)
     )
     conn.commit()
     return cur.lastrowid

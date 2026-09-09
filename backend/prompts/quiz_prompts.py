@@ -1,15 +1,16 @@
 """
 prompts/quiz_prompts.py — Prompt builders for MCQ generation with domain adaptation.
+Enforces at least 10 multiple-choice questions with answer-neutral hints.
 """
 
 
 def generate_quiz_prompt(topic: str, level: str, previous_mistakes: list,
-                          num_questions: int = 5) -> list:
+                          num_questions: int = 10) -> list:
     """
     Returns messages list for quiz MCQ generation with domain awareness.
-    level: 'school' | 'beginner' | 'diploma' | 'undergraduate' | 'graduate' | 'intermediate' | 'advanced'
-    previous_mistakes: list of concept tag strings the student got wrong before
+    Guarantees at least 10 questions (or requested count).
     """
+    count = max(10, num_questions)
     level_norm = (level or "intermediate").lower().strip()
 
     difficulty_map = {
@@ -28,36 +29,44 @@ def generate_quiz_prompt(topic: str, level: str, previous_mistakes: list,
         mistakes_str = ", ".join(previous_mistakes)
         mistakes_instruction = (
             f"\nPRIORITY: The student previously struggled with: {mistakes_str}. "
-            "Generate at least 2 questions directly targeting these concepts with clear explanations."
+            "Dedicate several questions directly to testing and explaining these concepts."
         )
 
-    system_prompt = f"""You are an expert educational assessment creator for LearnIQ.
-Generate exactly {num_questions} high-quality, conceptual multiple-choice questions (MCQs) specifically for the given topic and subject domain.
+    system_prompt = f"""You are an elite educational assessment engineer for LearnIQ's AI Quiz Challenge.
+Generate EXACTLY {count} unique, high-quality, conceptual multiple-choice questions (MCQs) specifically for the topic '{topic}'.
 
 DIFFICULTY LEVEL: {difficulty_desc}
 {mistakes_instruction}
 
-QUALITY RULES:
-1. Subject-Appropriate: Questions must test actual understanding of the specific subject (coding logic for CS, reactions/mechanisms for Chemistry/Biology, formulas/derivations for Math/Physics, cause-and-effect for Humanities).
-2. Plausible Distractors: Incorrect options must represent common student misconceptions or near-misses, not silly/obvious joke options.
-3. Crystal-Clear Explanations: Explain why the correct answer is right AND why the most tempting distractor is incorrect.
-4. Clean JSON: Return ONLY a valid JSON array of question objects without markdown wrapping (no ```json ... ```).
+STRICT GENERATION RULES:
+1. QUANTITY: You MUST generate at least {count} questions. Never return fewer than {count}.
+2. TOPIC SPECIFICITY: Every question must directly assess '{topic}'. Do not include unrelated or filler questions.
+3. EXACTLY 4 OPTIONS: Each question must provide 4 distinct, plausible options: option_a, option_b, option_c, option_d.
+4. EXACTLY 1 CORRECT ANSWER: Indicate the correct option as 'a', 'b', 'c', or 'd'.
+5. NO DUPLICATES: Every question must test a different angle, subconcept, or application.
+6. EXPLANATION: Provide a clear 1-3 sentence explanation of why the correct answer is right.
+7. ANSWER-NEUTRAL HINT: Provide an insightful hint that guides thinking WITHOUT giving away the correct answer.
+   (e.g., Question: 'What is a closure in JavaScript?' -> Hint: 'Consider how an inner function retains access to its lexical scope even after the outer function finishes.')
+8. CONCEPT TAG: A concise snake_case concept tag (e.g., 'variable_scope', 'recursion', 'time_complexity').
 
-OUTPUT JSON SCHEMA:
+OUTPUT FORMAT:
+Return ONLY a valid JSON array of question objects. Do not wrap in markdown quotes or add conversational introductory text.
+
 [
   {{
-    "question": "Question text...",
-    "option_a": "Option A...",
-    "option_b": "Option B...",
-    "option_c": "Option C...",
-    "option_d": "Option D...",
-    "correct_answer": "a" | "b" | "c" | "d",
-    "explanation": "Clear explanation of the answer and underlying concept (2-3 sentences).",
-    "concept_tag": "short_snake_case_concept_label"
+    "question": "Question text here?",
+    "option_a": "First option",
+    "option_b": "Second option",
+    "option_c": "Third option",
+    "option_d": "Fourth option",
+    "correct_answer": "a",
+    "explanation": "Why 'a' is correct and why other options are incorrect.",
+    "hint": "Answer-neutral clue guiding the student's thought process.",
+    "concept_tag": "short_snake_case_tag"
   }}
 ]"""
 
     return [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"Generate {num_questions} high-yield MCQs for the topic: {topic}"}
+        {"role": "user", "content": f"Generate exactly {count} MCQs for topic: '{topic}'"}
     ]
