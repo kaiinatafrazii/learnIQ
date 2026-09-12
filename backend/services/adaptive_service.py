@@ -112,14 +112,17 @@ def update_profile_after_quiz(conn, user_id: int, topic_id: int, quiz_result: di
     # Get or init topic progress
     existing = get_topic_progress(conn, user_id, topic_id)
     if existing:
-        prev_accuracy = existing["quiz_accuracy"]
+        prev_mastery = existing["mastery_score"]
         prev_attempts = existing["attempts"]
-        # Moving average for mastery
-        new_mastery = round((prev_accuracy * prev_attempts + quiz_accuracy) / (prev_attempts + 1), 1)
+        # Moving average: blend the accumulated mastery score with the new quiz accuracy
+        new_mastery = round((prev_mastery * prev_attempts + quiz_accuracy) / (prev_attempts + 1), 1)
         new_attempts = prev_attempts + 1
     else:
         new_mastery = quiz_accuracy
         new_attempts = 1
+
+    # Clamp to valid percentage range
+    new_mastery = min(max(new_mastery, 0.0), 100.0)
 
     upsert_topic_progress(conn, user_id, topic_id, new_mastery, quiz_accuracy, new_attempts)
 
@@ -127,6 +130,7 @@ def update_profile_after_quiz(conn, user_id: int, topic_id: int, quiz_result: di
     all_progress = get_all_topic_progress(conn, user_id)
     if all_progress:
         overall = round(sum(p["mastery_score"] for p in all_progress) / len(all_progress), 1)
+        overall = min(max(overall, 0.0), 100.0)  # Clamp to [0, 100]
     else:
         overall = 0.0
 

@@ -4,6 +4,8 @@ import React from 'react'
 export default function QuizFeedback({
   isCorrect = false,
   explanation = '',
+  message = '',
+  correctAnswerText = '',
   scoreAdded = 100,
   streakBonus = 0,
   isLastQuestion = false,
@@ -22,16 +24,16 @@ export default function QuizFeedback({
           <span className="text-2xl">{isCorrect ? '🎉' : '💔'}</span>
           <div>
             <h3 className="font-extrabold text-base sm:text-lg">
-              {isCorrect ? 'Awesome! Correct Answer!' : 'Not quite! Lost 1 Life.'}
+              {message || (isCorrect ? 'Awesome! Correct Answer!' : 'Not quite! Lost 1 Life.')}
             </h3>
             <div className="flex items-center gap-2 mt-0.5">
               {isCorrect ? (
                 <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-                  +{scoreAdded} pts {streakBonus > 0 && `(+${streakBonus} 🔥 Streak Bonus!)`}
+                  ✓ {isCorrect ? `+${scoreAdded} XP` : 'One life lost'} {streakBonus > 0 && `(+${streakBonus} 🔥 Streak Bonus!)`}
                 </span>
               ) : (
                 <span className="text-xs font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-md">
-                  Hangman character in danger!
+                  Review the explanation and keep going.
                 </span>
               )}
             </div>
@@ -61,6 +63,7 @@ export default function QuizFeedback({
       {/* Explanation text */}
       {explanation && (
         <div className="pt-2.5 border-t border-black/10">
+          {!isCorrect && correctAnswerText && <p className="text-xs sm:text-sm leading-relaxed mb-1"><strong className="font-semibold mr-1">Correct answer:</strong>{correctAnswerText}</p>}
           <p className="text-xs sm:text-sm leading-relaxed opacity-90">
             <strong className="font-semibold mr-1">Explanation:</strong>
             {explanation}

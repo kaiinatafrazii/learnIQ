@@ -185,12 +185,12 @@ export default function Dashboard() {
                   <>
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-sm text-slate-500">Overall Mastery</span>
-                      <span className="text-2xl font-bold text-primary-600">{profile.overall_mastery ?? 0}%</span>
+                      <span className="text-2xl font-bold text-primary-600">{Math.min(100, Math.round(profile.overall_mastery ?? 0))}%</span>
                     </div>
                     <div className="h-2 bg-slate-100 rounded-full mb-4">
                       <div
                         className="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all duration-700"
-                        style={{ width: `${profile.overall_mastery ?? 0}%` }}
+                        style={{ width: `${Math.min(100, profile.overall_mastery ?? 0)}%` }}
                       />
                     </div>
                     <div className="flex items-center justify-between">

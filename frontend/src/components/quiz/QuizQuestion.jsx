@@ -1,5 +1,5 @@
 // components/quiz/QuizQuestion.jsx — Question card with Options and Hint system
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import QuizOption from './QuizOption'
 
 const OPTION_KEYS = ['a', 'b', 'c', 'd']
@@ -14,8 +14,15 @@ export default function QuizQuestion({
   onSelectOption = () => {},
   onUseHint = () => {},
   disabled = false,
+  presentation = 'normal',
+  freeHint = false,
 }) {
   const [showHintBox, setShowHintBox] = useState(hintUsed)
+  const options = question?.displayOptions || OPTION_KEYS.map((key) => ({ key, text: question?.[`option_${key}`] }))
+
+  useEffect(() => {
+    setShowHintBox(Boolean(hintUsed))
+  }, [question?.id, hintUsed])
 
   if (!question) return null
 
@@ -49,8 +56,8 @@ export default function QuizQuestion({
             }`}
           >
             <span>💡</span>
-            <span>{showHintBox ? 'Hide Hint' : 'Need a Hint?'}</span>
-            {!hintUsed && <span className="text-[10px] text-amber-600 font-bold">(-10 pts)</span>}
+            <span>{showHintBox ? 'Hide Hint' : freeHint ? 'Free Hint' : 'Need a Hint?'}</span>
+            {!hintUsed && !freeHint && <span className="text-[10px] text-amber-600 font-bold">(-10 pts)</span>}
           </button>
         )}
       </div>
@@ -67,14 +74,16 @@ export default function QuizQuestion({
       )}
 
       {/* Question Text */}
+      <div className="text-[11px] font-black uppercase tracking-[0.18em] text-primary-600 mb-2">
+        {presentation === 'mission' ? 'Mission briefing' : presentation === 'clue' ? 'Evidence clue' : presentation === 'attack' ? 'Defend your position' : presentation === 'checkpoint' ? 'Checkpoint decision' : 'Quick challenge'}
+      </div>
       <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-relaxed mb-6">
         {question.question}
       </h2>
 
       {/* 4 Answer Options */}
       <div className="space-y-3">
-        {OPTION_KEYS.map((key) => {
-          const optText = question[`option_${key}`]
+        {options.map(({ key, text: optText }) => {
           if (!optText) return null
 
           const isUserChoice = selectedOption === key

@@ -20,6 +20,7 @@ export default function QuizResult({
   const accuracy = results.accuracy ?? 0
   const bestStreak = results.highest_streak || 0
   const performance = results.performance_level || (accuracy >= 85 ? 'Advanced' : accuracy >= 60 ? 'Intermediate' : 'Beginner / Needs Revision')
+  const resultTitle = results.result_title || (isGameOver ? 'Game Over — Challenge Ended!' : 'AI Quiz Challenge Complete!')
 
   const questionsWithAnswers = results.questions_with_answers || []
   const incorrectQuestions = questionsWithAnswers.filter(q => !q.is_correct)
@@ -41,11 +42,12 @@ export default function QuizResult({
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-1">
-          {isGameOver ? 'Game Over — Challenge Ended!' : 'AI Quiz Challenge Complete!'}
+          {isGameOver ? 'Game Over — Challenge Ended!' : resultTitle}
         </h1>
         <p className="text-sm sm:text-base opacity-80 mb-6">
           Topic: <span className="font-semibold">{results.topic_name}</span>
         </p>
+        {results.game_mode && <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-white/75 mb-5"><span className="px-2.5 py-1 rounded-full bg-white/10 border border-white/15">{results.game_mode}</span><span className="px-2.5 py-1 rounded-full bg-white/10 border border-white/15">Reward: {results.reward_style}</span></div>}
 
         {/* Big Score Display */}
         <div className="inline-flex items-baseline gap-1 bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 mb-6">
