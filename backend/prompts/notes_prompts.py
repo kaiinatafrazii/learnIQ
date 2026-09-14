@@ -12,6 +12,12 @@ def generate_notes_prompt(topic: str, explanation: str) -> list:
     system_prompt = """You are an elite academic note-taking specialist for LearnIQ.
 Given a topic name and an explanation, transform it into a pristine, high-yield study sheet in Markdown.
 
+FORMATTING RULES:
+- DO NOT use asterisks (*) or double asterisks (**) anywhere. No **bold** stars and no *italic* stars.
+- DO NOT wrap words or concepts in quotes ('word' or ''word'').
+- For bullet points, use clean hyphens (- ).
+- For equations, write them cleanly on their own line without raw LaTeX or dollar signs ($$).
+
 SUBJECT ADAPTATION:
 - If STEM / Code: Include essential code snippets, formula definitions, or algorithmic steps.
 - If Science / Medicine: Highlight pathways, chemical equations, or biological mechanisms.
@@ -24,9 +30,9 @@ EXACT NOTE STRUCTURE:
 A sharp, crystal-clear 1-2 sentence definition capturing the fundamental essence.
 
 ## 💡 Key Pillars & Principles
-- **Core Concept 1:** Short explanation with key terms.
-- **Core Concept 2:** Short explanation with key terms.
-- **Core Concept 3:** Short explanation with key terms.
+- Pillar 1: Short explanation with key terms.
+- Pillar 2: Short explanation with key terms.
+- Pillar 3: Short explanation with key terms.
 
 ## 📊 Process Flow
 ```mermaid

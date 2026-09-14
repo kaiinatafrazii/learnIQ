@@ -18,6 +18,7 @@ from routes.chat_routes import chat_bp
 from routes.voice_routes import voice_bp
 from routes.performance_routes import performance_bp
 from routes.progress_routes import progress_bp
+from routes.image_routes import image_bp
 
 load_dotenv()
 
@@ -40,6 +41,7 @@ def create_app():
     app.register_blueprint(voice_bp)
     app.register_blueprint(performance_bp)
     app.register_blueprint(progress_bp)
+    app.register_blueprint(image_bp)
 
     # ── Health check ────────────────────────────────────────────────────────
     @app.route("/api/health")

@@ -1,19 +1,86 @@
 """
-database.py — SQLite connection, table creation, and seed data.
-Run this module directly to reinitialise the DB: `python database.py`
+database.py — Turso/libSQL connection, table creation, and seed data.
+Run this module directly to initialise the database: `python database.py`
 """
 
-import sqlite3
 import os
+import sqlite3
+from typing import Any
+
+try:
+    from libsql_client import create_client_sync
+except ImportError:
+    create_client_sync = None
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
 DATABASE_PATH = os.getenv("DATABASE_PATH", "./tutor.db")
+TURSO_DATABASE_URL = os.getenv("TURSO_DATABASE_URL", "").strip()
+if TURSO_DATABASE_URL.startswith(("turso://", "libsql://")):
+    TURSO_DATABASE_URL = "https://" + TURSO_DATABASE_URL.split("://", 1)[1]
+TURSO_AUTH_TOKEN = os.getenv("TURSO_AUTH_TOKEN", "").strip()
+
+
+class _TursoRow(dict):
+    """Mapping row with sqlite3.Row-style access by column name or index."""
+
+    def __init__(self, columns: list[str], values: tuple[Any, ...]):
+        super().__init__(zip(columns, values))
+        self._values = values
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._values[key]
+        return super().__getitem__(key)
+
+
+class _TursoResult:
+    def __init__(self, columns: list[str], rows: list[tuple[Any, ...]], lastrowid=None):
+        self._rows = [_TursoRow(columns, row) for row in rows]
+        self.lastrowid = lastrowid
+
+    def fetchone(self):
+        return self._rows[0] if self._rows else None
+
+    def fetchall(self):
+        return self._rows
+
+
+class _TursoConnection:
+    """Small libSQL adapter matching the sqlite3 connection API used by this app."""
+
+    def __init__(self):
+        if create_client_sync is None:
+            raise RuntimeError("Install libsql-client to use Turso.")
+        self._client = create_client_sync(TURSO_DATABASE_URL, auth_token=TURSO_AUTH_TOKEN)
+
+    def execute(self, sql, parameters=()):
+        result = self._client.execute(sql, parameters)
+        columns = list(result.columns or [])
+        rows = list(result.rows or [])
+        lastrowid = None
+        if sql.lstrip().upper().startswith("INSERT"):
+            lastrowid = self._client.execute("SELECT last_insert_rowid() AS id").rows[0][0]
+        return _TursoResult(columns, rows, lastrowid)
+
+    def cursor(self):
+        return self
+
+    def commit(self):
+        # Turso commits each statement unless an explicit transaction is used.
+        return None
+
+    def close(self):
+        self._client.close()
 
 
 def get_db():
-    """Return a new SQLite connection with FK enforcement and row_factory."""
+    """Return a new Turso connection, or local SQLite connection when unconfigured."""
+    if TURSO_DATABASE_URL:
+        return _TursoConnection()
+
     conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row          # access columns by name
     conn.execute("PRAGMA foreign_keys = ON")
@@ -181,7 +248,8 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print(f"[DB] Initialised -> {DATABASE_PATH}")
+    target = TURSO_DATABASE_URL if TURSO_DATABASE_URL else DATABASE_PATH
+    print(f"[DB] Initialised -> {target}")
 
 
 if __name__ == "__main__":

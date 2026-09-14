@@ -62,12 +62,33 @@ def get_client() -> Groq:
 
 
 def clean_model_output(text: str) -> str:
-    """Strip internal reasoning tags (like DeepSeek / Qwen <think> blocks) if present."""
+    """Strip internal reasoning tags, stray asterisks, double quotes, and format equations cleanly."""
     if not text:
         return ""
     # Strip <think>...</think>
     cleaned = re.sub(r"<think>[\s\S]*?</think>", "", text, flags=re.IGNORECASE).strip()
-    return cleaned if cleaned else text.strip()
+
+    # Clean double single quotes ''word'' -> word
+    cleaned = re.sub(r"''([^'\n]+)''", r"\1", cleaned)
+    cleaned = cleaned.replace("''", "")
+
+    # Clean LaTeX artifacts in formulas
+    cleaned = cleaned.replace(r"\times", "×")
+    cleaned = cleaned.replace(r"\cdot", "·")
+    cleaned = cleaned.replace(r"\pm", "±")
+    cleaned = cleaned.replace(r"\approx", "≈")
+    cleaned = cleaned.replace(r"\le", "≤")
+    cleaned = cleaned.replace(r"\ge", "≥")
+    cleaned = cleaned.replace(r"\neq", "≠")
+    cleaned = cleaned.replace(r"\sqrt", "√")
+    cleaned = re.sub(r"\$\$(.*?)\$\$", r"\1", cleaned)
+    cleaned = re.sub(r"\$(.*?)\$", r"\1", cleaned)
+
+    # Clean asterisks / star marks
+    cleaned = re.sub(r"\*\*([^*\n]+)\*\*", r"\1", cleaned)
+    cleaned = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"\1", cleaned)
+
+    return cleaned.strip()
 
 
 def detect_subject_category(text: str) -> str:
@@ -202,20 +223,20 @@ def _generate_fallback_response(messages: list) -> str:
         return f"""# 📚 Master Notes: {topic}
 
 ## 🔍 Core Definition
-**{topic}** represents a fundamental concept in {category.replace('_', ' ').title()}. It provides the systematic principles required to understand and apply this phenomenon effectively.
+{topic} represents a fundamental concept in {category.replace('_', ' ').title()}. It provides the systematic principles required to understand and apply this phenomenon effectively.
 
 ## 💡 Key Pillars & Principles
-1. **Foundation**: The starting premises and definitions governing {topic}.
-2. **Mechanism**: The step-by-step process and interactions that generate results.
-3. **Application**: How this concept directly solves problems or manifests in practice.
+- Core Foundation: The starting premises and governing rules for {topic}.
+- Operational Mechanism: The step-by-step process and interactions that generate results.
+- Practical Application: How this concept directly solves problems or manifests in practice.
 
-## 🧠 Memory Hook / Analogy
-> Think of **{topic}** like a well-calibrated engine: every component has an exact role, and altering one variable predictably shifts the overall output.
+## 🧠 Intuitive Picture
+> 💡 Think of {topic} like a well-calibrated engine: every component has an exact role, and altering one variable predictably shifts the overall output.
 
-## 🎯 Exam & Viva Rapid Points
+## 🎯 Exam & Rapid Recall
 - Always identify the primary inputs, governing laws, and final outputs.
 - Watch out for edge cases and boundary conditions.
-- Remember the standard formulas/rules associated with this domain."""
+- Remember the standard formulas and rules associated with this domain."""
 
     # 4. Tutor Explanation
     topic_match = re.search(r'topic:\s*([^\n\r]+)', all_text, re.IGNORECASE)
@@ -225,25 +246,30 @@ def _generate_fallback_response(messages: list) -> str:
     level = level_match.group(1).strip() if level_match else "Intermediate"
     category = detect_subject_category(topic)
 
-    return f"""# 🎓 Master Class: {topic} ({level.title()} Level)
+    return f"""# 🎓 {topic} ({level.title()} Level)
 
-Welcome to your specialized lesson on **{topic}**. We will examine this concept through first principles, intuitive analogies, and subject-tailored breakdowns.
+Welcome to your specialized lesson on {topic}. Let us examine this concept through first principles, intuitive analogies, and clear step-by-step breakdowns.
 
-## 1. What is {topic}?
-In **{category.replace('_', ' ').title()}**, **{topic}** is a cornerstone concept that explains how specific inputs, principles, and rules combine to produce consistent, predictable results. Understanding it allows you to solve advanced problems with confidence.
+## 💡 The Big Picture
+In {category.replace('_', ' ').title()}, {topic} is a cornerstone concept that explains how specific inputs, principles, and rules combine to produce consistent, predictable results. Understanding it allows you to solve advanced problems with confidence.
 
-## 2. Intuitive Real-World Analogy
-> 💡 **Real-World Picture:** Think of **{topic}** like a precision orchestrator. Just as an orchestra requires coordinated timing, distinct instrumental voices, and disciplined tempo to create harmony, **{topic}** coordinates underlying principles to achieve its final state.
+## ⚙️ How It Works & Core Mechanism
+1. Core Setup: The starting state and foundational conditions needed.
+2. Dynamic Transformation: The critical calculation or operational step that drives the system.
+3. Final Resolution: The stable end state and verification of results.
 
-## 3. Step-by-Step Breakdown
-1. **Core Setup & Inputs**: The starting state and foundational conditions needed.
-2. **Dynamic Mechanism**: The critical transformation or calculation step that drives the system.
-3. **Outcome & Resolution**: The stable end state and verification of results.
+## 🌍 Real-World Application
+> 💡 Think of it this way: Just as a precision clockwork mechanism requires coordinated gears and balanced tension to keep perfect time, {topic} coordinates its underlying principles to achieve its final outcome.
 
-## 4. Key Takeaways & Exam Strategy
-- **Pillar 1:** Understand the fundamental definition and purpose of {topic}.
-- **Pillar 2:** Focus on the causal mechanism, not just rote memorization.
-- **Pillar 3:** Test yourself on edge cases and standard problem variations."""
+## ⚠️ Common Traps & Exam Tips
+Focus on the causal mechanism and fundamental relationships rather than rote memorization. Test your understanding on edge cases and standard problem variations.
+
+Key Takeaways:
+- Point 1: Understand the core definition and purpose of {topic}.
+- Point 2: Focus on the causal mechanism and step-by-step flow.
+- Point 3: Master the key formulas and variable relationships.
+- Point 4: Apply the concept to real-world practical scenarios.
+- Point 5: Avoid confusing superficial symptoms with the root governing principle."""
 
 
 def chat_completion(messages: list, model: str = None,

@@ -27,6 +27,7 @@ def explain():
     data = request.get_json()
     topic_name = (data.get("topic") or "").strip()
     follow_up = data.get("follow_up_question") or None
+    lang = data.get("lang", "en")  # 'en' | 'hi' | 'or' | 'bn'
 
     if not topic_name:
         raise ValueError("Topic name is required.")
@@ -40,16 +41,21 @@ def explain():
         difficulty = get_difficulty(conn, user_id, topic_id)
         weak_topics = get_weak_concepts(conn, user_id, topic_id)
 
-        explanation = generate_explanation(topic_name, difficulty, weak_topics, follow_up)
+        explanation = generate_explanation(topic_name, difficulty, weak_topics, follow_up, lang=lang)
 
         session_id = create_learning_session(conn, user_id, topic_id, difficulty)
 
-        # Extract key points — simple parse: find the Key Takeaways section
+        # Extract key points — flexible parse: find the Key Takeaways section
         key_points = []
-        if "**Key Takeaways:**" in explanation:
-            after = explanation.split("**Key Takeaways:**")[1].strip()
+        takeaways_header = None
+        for pattern in ["Key Takeaways:", "**Key Takeaways:**", "## Key Takeaways", "Key Takeaways"]:
+            if pattern in explanation:
+                takeaways_header = pattern
+                break
+        if takeaways_header:
+            after = explanation.split(takeaways_header)[1].strip()
             for line in after.split("\n"):
-                line = line.strip().lstrip("•-* ")
+                line = line.strip().lstrip("•-* 0123456789.)")
                 if line:
                     key_points.append(line)
 

@@ -7,3 +7,5 @@ gTTS
 a2wsgi
 PyJWT
 werkzeug
+google-genai
+libsql-client

@@ -388,17 +388,17 @@ QuizResult.jsx result, mistakes aur next recommendation show karta hai
 
 Database file `backend/database.py` SQLite connection banati hai. Default path `./tutor.db` hai. Data access helpers `backend/models.py` mein hain.
 
-| Table | Simple meaning |
-|---|---|
-| `users` | Student ka name, email, password hash aur education level |
-| `topics` | Learning topics aur category |
-| `learning_sessions` | Student ne kis topic par learning session start kiya |
-| `notes` | AI ya student ke saved notes |
-| `quizzes` | Quiz owner, topic, difficulty, total questions aur score |
-| `questions` | Quiz ke question, 4 options, correct answer, hint aur explanation |
-| `quiz_answers` | Student ka selected answer aur correctness |
-| `learner_profiles` | Overall mastery, current level, weak aur strong topics |
-| `topic_progress` | Har user-topic ka mastery, accuracy aur attempts |
+| Table                 | Simple meaning                                                    |
+| --------------------- | ----------------------------------------------------------------- |
+| `users`             | Student ka name, email, password hash aur education level         |
+| `topics`            | Learning topics aur category                                      |
+| `learning_sessions` | Student ne kis topic par learning session start kiya              |
+| `notes`             | AI ya student ke saved notes                                      |
+| `quizzes`           | Quiz owner, topic, difficulty, total questions aur score          |
+| `questions`         | Quiz ke question, 4 options, correct answer, hint aur explanation |
+| `quiz_answers`      | Student ka selected answer aur correctness                        |
+| `learner_profiles`  | Overall mastery, current level, weak aur strong topics            |
+| `topic_progress`    | Har user-topic ka mastery, accuracy aur attempts                  |
 
 Relationships simple example:
 

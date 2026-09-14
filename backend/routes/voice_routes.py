@@ -40,11 +40,11 @@ def speak():
     """
     data = request.get_json()
     text = (data.get("text") or "").strip()
-    voice = data.get("voice", "alloy")
+    lang = data.get("lang", "en")  # 'en' | 'hi' | 'or' | 'bn'
 
     if not text:
         raise ValueError("Text cannot be empty.")
 
-    audio_bytes = synthesize_speech(text, voice)
+    audio_bytes = synthesize_speech(text, lang=lang)
     audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
     return jsonify({"audio_base64": audio_b64, "format": "mp3"})

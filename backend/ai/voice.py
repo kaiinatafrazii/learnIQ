@@ -1,10 +1,19 @@
-"""ai/voice.py — Speech-to-text using Groq Whisper and text-to-speech using gTTS."""
+"""ai/voice.py — Speech-to-text using Groq Whisper and text-to-speech using gTTS (Google Indian voices)."""
 
 import io
 import tempfile
 import os
 from ai.groq_client import get_client, is_api_key_valid
 from gtts import gTTS
+
+# Language code → gTTS (lang, tld) mapping
+# tld='co.in' gives Google's Indian English accent
+LANG_TTS_MAP = {
+    "en":   ("en", "co.in"),   # Indian English (Google India)
+    "hing": ("hi", "co.in"),   # Hinglish — use Hindi voice (closest natural fit)
+    "or":   ("or", "co.in"),   # Odia
+    "bn":   ("bn", "co.in"),   # Bengali
+}
 
 
 def transcribe_audio(audio_bytes: bytes, filename: str = "recording.webm") -> str:
@@ -35,17 +44,20 @@ def transcribe_audio(audio_bytes: bytes, filename: str = "recording.webm") -> st
             os.unlink(tmp_path)
 
 
-def synthesize_speech(text: str, voice: str = "alloy") -> bytes:
+def synthesize_speech(text: str, lang: str = "en") -> bytes:
     """
-    Convert text to speech using gTTS.
-    Returns raw MP3 bytes without requiring any external paid API.
+    Convert text to speech using gTTS with Google Indian voices.
+    lang: 'en' | 'hi' | 'or' | 'bn'
+    Returns raw MP3 bytes.
     """
     clean_text = text[:4096].strip()
     if not clean_text:
         clean_text = "No text provided for audio."
 
+    gtts_lang, gtts_tld = LANG_TTS_MAP.get(lang, ("en", "co.in"))
+
     fp = io.BytesIO()
-    tts = gTTS(text=clean_text, lang="en")
+    tts = gTTS(text=clean_text, lang=gtts_lang, tld=gtts_tld, slow=False)
     tts.write_to_fp(fp)
     fp.seek(0)
     return fp.read()
